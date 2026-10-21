@@ -220,9 +220,15 @@ Tested target: ESP32-WROOM-32 (`esp32dev`). The code only uses `pinMode`/`digita
 
 ## How to enable it
 
-Use the ready-made environment (WS281x RGB, data on GPIO2, active-high power switch on GPIO16, matching the P-MOSFET board in [`hardware/hyperspi-led-controller`](hardware/hyperspi-led-controller)):
+Use one of the ready-made environments. Both use data on GPIO2 and an active-high power switch on GPIO16, matching the P-MOSFET board in [`hardware/hyperspi-led-controller`](hardware/hyperspi-led-controller):
+
+| LED strip | Environment | Firmware |
+|---|---|---|
+| SK6812 RGBW cold white | `SK6812_RGBW_COLD_LED_POWER` | `hyperspi_esp32_SK6812_RGBW_COLD_LED_POWER.bin` |
+| WS281x RGB (WS2812B etc.) | `WS281x_RGB_LED_POWER` | `hyperspi_esp32_WS281x_RGB_LED_POWER.bin` |
+
 ```
-pio run -e WS281x_RGB_LED_POWER
+pio run -e SK6812_RGBW_COLD_LED_POWER
 ```
 You can also append the flags to the `build_flags` of any ESP32 environment in `platformio.ini`:
 ```ini
