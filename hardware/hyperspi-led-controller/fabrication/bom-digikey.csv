@@ -2,7 +2,7 @@ Refs,Qty,Value,Manufacturer,MPN,DigiKey PN,Unit price (qty 1),DigiKey stock 2026
 "J1,J2",2,5.08mm 4-pos screw terminal,Phoenix Contact,1715747,277-1265-ND,$2.28,1348,MKDS 1.5/4-5.08; 15 A per pole
 J3,1,5.08mm 2-pos screw terminal,Same Sky,TB007-508-02BE,102-6203-ND,$0.53,14260,Phoenix 1715721 (277-1263-ND; $1.16) matches J1/J2 but is out of stock (backorder; 6 wk lead time)
 F1,1,ATO blade fuse holder (PCB),Littelfuse,178.6165.0002,WK6265-ND,$5.72,14511,Matches footprint FuseHolder_Blade_ATO_Littelfuse_FLR_178.6165
-F1 fuse,1,ATO fuse 15 A,Littelfuse,0287015.PXCN,F4200-ND,$0.44,45707,Size to the LED strip. 20 A = 0287020.PXCN (F4201-ND; $0.44; 59509). The 0257 series is obsolete
+F1 fuse,1,ATO fuse 20 A,Littelfuse,0287020.PXCN,F4201-ND,$0.44,59509,Size to the LED strip; 15 A = 0287015.PXCN (F4200-ND; $0.44; 45707). The 0257 series is obsolete
 F2,1,PTC 3 A hold 16 V,Bourns,MF-RHT300-0,118-MF-RHT300-0-ND,$0.99,1982,
 J4,1,1x9 male header 2.54mm,Sullins,PRPC009SAAN-RC,35-PRPC009SAAN-RC-ND,$0.18,1789,
 U1 sockets,2,1x15 female header 2.54mm,Sullins,PPTC151LFBN-RC,S7013-ND,$0.92,17438,For the ESP32 DevKit (board itself from Amazon)
