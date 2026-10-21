@@ -64,6 +64,22 @@
 
 #pragma message(VAR_NAME_VALUE(SERIALCOM_SPEED))
 
+#ifdef LED_POWER_PIN
+	#pragma message(VAR_NAME_VALUE(LED_POWER_PIN))
+	#ifdef LED_POWER_INVERT
+		#pragma message("LED_POWER_INVERT = active-low relay")
+	#endif
+	#ifdef LED_POWER_OFF_DELAY
+		#pragma message(VAR_NAME_VALUE(LED_POWER_OFF_DELAY))
+	#endif
+	#ifdef LED_POWER_ON_DELAY
+		#pragma message(VAR_NAME_VALUE(LED_POWER_ON_DELAY))
+	#endif
+	#ifdef LED_POWER_IDLE_TIMEOUT
+		#pragma message(VAR_NAME_VALUE(LED_POWER_IDLE_TIMEOUT))
+	#endif
+#endif
+
 #if defined(ARDUINO_ARCH_ESP32)
 	#if defined(CONFIG_IDF_TARGET_ESP32S2)
 		#ifdef NEOPIXEL_RGBW
@@ -261,6 +277,11 @@ static const uint32_t BUFFER_SIZE = REAL_BUFFER + 8;
 
 void setup()
 {
+	#if defined(LED_POWER_PIN)
+		// keep the LED power relay off as early as possible
+		powerControl.init();
+	#endif
+
 	// Init serial port
 	Serial.setTimeout(50);
 	Serial.begin(SERIALCOM_SPEED);
@@ -281,6 +302,9 @@ void setup()
 		#if defined(SECOND_SEGMENT_START_INDEX)
 			SerialPort.write("SECOND_SEGMENT_START_INDEX = ");
 			SerialPort.println(SECOND_SEGMENT_START_INDEX);
+		#endif
+		#if defined(LED_POWER_PIN)
+			LED_POWER_LOG("Relay initialized: OFF");
 		#endif
 
 		// Colorspace/Led type info

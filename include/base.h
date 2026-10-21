@@ -50,6 +50,10 @@ class Base
 	LED_DRIVER2* ledStrip2 = nullptr;
 	// frame is set and ready to render
 	bool readyToRender = false;
+	#if defined(LED_POWER_PIN)
+		// all color components of the current frame combined, zero for the black frame
+		uint8_t frameColorBits = 0;
+	#endif
 
 	public:
 		// static data buffer for the loop
@@ -142,10 +146,28 @@ class Base
 			readyToRender = false;
 		}
 
+		#if defined(LED_POWER_PIN)
+			inline void resetFrameColor()
+			{
+				frameColorBits = 0;
+			}
+
+			inline bool isFrameBlack()
+			{
+				return frameColorBits == 0;
+			}
+		#endif
+
 		inline void renderLeds(bool newFrame)
 		{
 			if (newFrame)
 				readyToRender = true;
+
+			#if defined(LED_POWER_PIN)
+				// keep the frame waiting until the LED power is enabled and stable
+				if (!powerControl.isOutputReady())
+					return;
+			#endif
 
 			if (readyToRender &&
 				(ledStrip1 != nullptr && ledStrip1->CanShow()) &&
@@ -165,6 +187,14 @@ class Base
 		{
 			if (pix < ledsNumber)
 			{
+				#if defined(LED_POWER_PIN)
+					#if defined(NEOPIXEL_RGBW)
+						frameColorBits |= inputColor.R | inputColor.G | inputColor.B | inputColor.W;
+					#else
+						frameColorBits |= inputColor.R | inputColor.G | inputColor.B;
+					#endif
+				#endif
+
 				#if defined(SECOND_SEGMENT_START_INDEX)
 					if (pix < SECOND_SEGMENT_START_INDEX)
 						ledStrip1->SetPixelColor(pix, inputColor);

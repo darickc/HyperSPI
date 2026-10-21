@@ -212,6 +212,101 @@ Edit ```rp2040\CMakeLists.txt``` file and recompile the project.
 
 ![HyperSPI](https://user-images.githubusercontent.com/85223482/222923979-f344349a-1f8b-4195-94ca-51721923359e.png)
 
+# Automatic LED Power Control (ESP32)
+
+HyperSPI can optionally drive a relay (or a MOSFET power switch) that disconnects the **positive 5V supply of the LED strip** when there is nothing to display, similar to the relay feature of WLED and HyperSerialESP32. The feature is compiled in only when `LED_POWER_PIN` is defined. Without it the firmware behaves exactly as before.
+
+Tested target: ESP32-WROOM-32 (`esp32dev`). The code only uses `pinMode`/`digitalWrite`/`millis`, but other boards have not been verified.
+
+## How to enable it
+
+Use the ready-made environment (WS281x RGB, data on GPIO2, active-high power switch on GPIO16, matching the P-MOSFET board in [`hardware/hyperspi-led-controller`](hardware/hyperspi-led-controller)):
+```
+pio run -e WS281x_RGB_LED_POWER
+```
+You can also append the flags to the `build_flags` of any ESP32 environment in `platformio.ini`:
+```ini
+; active-low relay module (IN = LOW switches the LED power on)
+build_flags = -DNEOPIXEL_RGB -DDATA_PIN=2 ${env.build_flags} -DLED_POWER_PIN=16 -DLED_POWER_INVERT
+
+; active-high relay module or MOSFET board (IN = HIGH switches the LED power on)
+build_flags = -DNEOPIXEL_RGB -DDATA_PIN=2 ${env.build_flags} -DLED_POWER_PIN=16
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `LED_POWER_PIN` | not defined (feature disabled) | GPIO connected to the relay control input |
+| `LED_POWER_INVERT` | not defined (active-high) | Define it for active-low relay modules |
+| `LED_POWER_OFF_DELAY` | `5000` | How long (ms) the LEDs must stay completely black before the power is switched off |
+| `LED_POWER_ON_DELAY` | `200` | Time (ms) the LED supply gets to stabilize before the first frame is sent to the strip |
+| `LED_POWER_IDLE_TIMEOUT` | `5000` | Time (ms) without any valid frame before the power is switched off. `0` disables it |
+| `LED_POWER_DEBUG` | not defined | Prints `[LED POWER] ...` messages to the serial port (115200) on state changes only |
+
+## Recommended GPIO
+
+- **GPIO16** (default in the example). It is not a strapping pin and is not used by HyperSPI. Note: on WROVER modules GPIO16/17 are used by the PSRAM, so pick another pin there.
+- Alternatives: GPIO17, 25, 26, 27, 32, 33.
+- Avoid the strapping pins GPIO0, 2, 5, 12 and 15. Avoid the flash pins GPIO6–11, and the input-only pins GPIO34–39.
+- HyperSPI already uses: SCK GPIO18, MISO GPIO19, MOSI GPIO23, CS GPIO5, LED data GPIO2 (and the second segment data pin if configured).
+
+## Wiring
+
+```
+ 5V PSU (+) ──── relay COM ──── relay NO ──── LED strip +5V
+ 5V PSU (−) ──────────────────────────────── LED strip GND ──── ESP32 GND ──── Raspberry Pi GND
+ ESP32 GPIO16 ──────────── relay IN
+ ESP32 GPIO2 ── level shifter (e.g. 74AHCT125) ── 330 Ω ── LED strip DIN
+ ESP32 powered independently (USB or its own 5V supply that is NOT switched by the relay)
+```
+
+- The relay switches **only the positive 5V supply of the LED strip**. Never switch the ground: an LED strip with a floating ground can find a ground path through the data line and the ESP32.
+- The ESP32 must stay powered while the LED power is off, otherwise it cannot switch it on again.
+- The ESP32, the LED strip, the power supply and the Raspberry Pi must share a common ground.
+- The relay or power switch must be rated for the **maximum DC current of the LED strip and its inrush current** when it is switched on, which can be a lot higher than the steady current. Mechanical relays are often rated for AC. Check the DC rating, or use a suitably rated logic-level MOSFET/high-side switch for higher currents.
+- **Back-powering:** an unpowered addressable LED can be partly powered through its data input. HyperSPI does not render anything while the LED power is off, so the data line stays idle (low). A 3.3V→5V level shifter such as the 74AHCT125 / SN74AHCT1G125 powered from the unswitched 5V (the ESP32 side, not the relay output), plus a 220–470 Ω series resistor close to the strip, isolates the ESP32 GPIO and limits any current. A level shifter is recommended anyway for reliable 5V LED data.
+- **Active-low modules:** many common opto-isolated relay boards switch on when IN is pulled LOW. If the module is powered from 5V, a 3.3V HIGH level from the ESP32 may not fully release the relay. Prefer a module that is specified for 3.3V logic or as a "high level trigger" type, power its input side from 3.3V if the board allows it (separate JD-VCC jumper), or use a transistor/MOSFET stage.
+
+### Boot state
+
+The firmware sets the relay pin to its inactive level as the first step of `setup()`, before the serial port, the LED driver and SPI are started. The level is written before the pin becomes an output, so there is no glitch. However, **software cannot control the pin during the ESP32 hardware reset and bootloader period** (a few hundred ms after power-up, reset or flashing). During that time GPIO16 is a high-impedance input. To keep the relay off during that time, add an external resistor:
+- active-high module: 10 kΩ pull-down from the GPIO to GND
+- active-low module: 10 kΩ pull-up from the GPIO to the logic level of the relay input
+
+## Expected behavior
+
+| Situation | Relay |
+|---|---|
+| ESP32 boots | OFF |
+| Invalid/damaged frame (CRC or Fletcher checksum fails) | No change |
+| Valid frame that is completely black, relay OFF | Stays OFF (the frame is not sent to the strip) |
+| First valid non-black frame | ON. The frame is held for `LED_POWER_ON_DELAY` and then rendered, even if HyperHDR sends nothing more |
+| Normal frames | Stays ON. The GPIO is written only when the state changes |
+| Black scene shorter than `LED_POWER_OFF_DELAY` | Stays ON (black frames are rendered normally) |
+| Black for `LED_POWER_OFF_DELAY` | OFF (measured from the first black frame, so it also works when HyperHDR sends black and then goes silent) |
+| No valid frame for `LED_POWER_IDLE_TIMEOUT` | OFF (only if the timeout is not `0`) |
+| Non-black frame while OFF | ON again, after the stabilization delay |
+
+With multiple segments, the relay is treated as one shared power supply. The frame is black only if all LEDs of all segments are black.
+
+All timers are non-blocking (`millis()` based and safe across its rollover), so SPI reception and LED rendering are not delayed.
+
+## HyperHDR behavior and settings
+
+- When you disable the LED device in HyperHDR (or stop it), HyperHDR sends 2 black frames and closes the SPI device. The relay switches off `LED_POWER_OFF_DELAY` later.
+- The Awa protocol has no power on/off command. The relay is controlled only by the frame content and by timing.
+- With `Image Processing→Smoothing` enabled (the HyperHDR default), a static image is still re-sent about once per second, which keeps the default 5 s `LED_POWER_IDLE_TIMEOUT` from triggering.
+- **Limitation:** a static image that is not re-sent and a stopped or crashed host look identical over SPI. If you disable Smoothing or see the LEDs switch off while showing a static color, either enable `Smoothing→Continuous output` (consider a lower update frequency), or build with `-DLED_POWER_IDLE_TIMEOUT=0`. With `0`, the relay switches off only after black frames, so a crashed host leaves the LEDs on with the last image.
+- Keep "Refresh time" at 0 as recommended above. It is not needed for this feature.
+
+## Troubleshooting
+
+- **Relay never switches on**: check the polarity (`LED_POWER_INVERT`), and check that the module accepts a 3.3V control signal. Enable `LED_POWER_DEBUG` and look for `[LED POWER] Relay ON` in the serial output. Black content never switches the relay on.
+- **Relay clicks on at power-up or reset**: add the pull-up/pull-down resistor described above.
+- **First frame is missing or flickers after power-on**: increase `LED_POWER_ON_DELAY` (e.g. 500) for power supplies that are slow to stabilize.
+- **LEDs switch off during a static color**: see the idle timeout limitation above.
+- **LEDs switch off too quickly in dark movie scenes**: increase `LED_POWER_OFF_DELAY` (e.g. 30000).
+- **ESP32 resets when the relay switches**: the inrush current or relay coil is pulling the supply down. Power the ESP32 separately, add bulk capacitance (e.g. 1000 µF) at the strip input, and keep the relay coil supply away from the ESP32 3.3V regulator.
+
 # Performance/debug output
 
 **The output is only available when HyperHDR is not using the device at the moment, so it should be disabled in the app for a while.** Stores the last result when HyperHDR was running in the current session. You can read it from the serial port at a speed of 115200.

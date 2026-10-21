@@ -89,6 +89,9 @@ class
 			fletcherExt = 0;
 			position = 0;
 			base.dropLateFrame();
+			#if defined(LED_POWER_PIN)
+				base.resetFrameColor();
+			#endif
 		}
 
 		/**

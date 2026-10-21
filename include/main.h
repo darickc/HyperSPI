@@ -37,6 +37,7 @@
 
 #include "calibration.h"
 #include "statistics.h"
+#include "powercontrol.h"
 #include "base.h"
 #include "framestate.h"
 
@@ -87,6 +88,11 @@ void processData()
 	unsigned long deltaTime = currentTime - statistics.getStartTime();
 
 	updateMainStatistics(currentTime, deltaTime, base.queueCurrent != base.queueEnd);
+
+	#if defined(LED_POWER_PIN)
+		// LED power relay timers: stabilization, black frames and inactivity
+		powerControl.update(currentTime);
+	#endif
 
 	if (statistics.getStartTime() + 5000 < millis())
 	{
@@ -312,6 +318,11 @@ void processData()
 			if (input == frameState.getFletcherExt())
 			{
 				statistics.increaseGood();
+
+				#if defined(LED_POWER_PIN)
+					// only a verified frame can switch the LED power, before it's rendered
+					powerControl.onValidFrame(millis(), base.isFrameBlack());
+				#endif
 
 				base.renderLeds(true);
 
