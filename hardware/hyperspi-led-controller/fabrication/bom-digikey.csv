@@ -1,0 +1,21 @@
+Refs,Qty,Value,Manufacturer,MPN,DigiKey PN,Unit price (qty 1),DigiKey stock 2026-10-21,Notes
+"J1,J2",2,5.08mm 4-pos screw terminal,Phoenix Contact,1715747,277-1265-ND,$2.28,1348,MKDS 1.5/4-5.08; 15 A per pole
+J3,1,5.08mm 2-pos screw terminal,Same Sky,TB007-508-02BE,102-6203-ND,$0.53,14260,Phoenix 1715721 (277-1263-ND; $1.16) matches J1/J2 but is out of stock (backorder; 6 wk lead time)
+F1,1,ATO blade fuse holder (PCB),Littelfuse,178.6165.0002,WK6265-ND,$5.72,14511,Matches footprint FuseHolder_Blade_ATO_Littelfuse_FLR_178.6165
+F1 fuse,1,ATO fuse 15 A,Littelfuse,0287015.PXCN,F4200-ND,$0.44,45707,Size to the LED strip. 20 A = 0287020.PXCN (F4201-ND; $0.44; 59509). The 0257 series is obsolete
+F2,1,PTC 3 A hold 16 V,Bourns,MF-RHT300-0,118-MF-RHT300-0-ND,$0.99,1982,
+J4,1,1x9 male header 2.54mm,Sullins,PRPC009SAAN-RC,35-PRPC009SAAN-RC-ND,$0.18,1789,
+U1 sockets,2,1x15 female header 2.54mm,Sullins,PPTC151LFBN-RC,S7013-ND,$0.92,17438,For the ESP32 DevKit (board itself from Amazon)
+U2 socket,1,DIP-14 socket,On Shore Technology,ED14DT,ED3045-5-ND,$0.52,10554,
+U2,1,SN74AHCT125N,Texas Instruments,SN74AHCT125N,296-4655-5-ND,$1.00,1846,Already owned (Amazon) - skip if you have it
+Q1,1,P-MOSFET 40 V logic-level TO-220,Goford Semiconductor,G75P04T,3141-G75P04T-ND,$2.09,3,Replaces obsolete IPP80P03P4L-04. Datasheet: Rds(on) max 9 mOhm @ Vgs -4.5 V (6.8 typ); pinout G-D-S (matches footprint). Only 3 in stock
+Q1 heatsink,1,TO-220 bolt-on heatsink 24.4 C/W,Boyd,577202B00000G,HS107-ND,$1.72,53891,Optional; recommended above ~10 A (about 15 A comfortable with this one). Needs M3 screw + thermal pad; tab is the drain (LED_5V_SW)
+Q2,1,2N3904 NPN TO-92,onsemi,2N3904BU,2N3904FS-ND,$0.29,305183,
+D2,1,1N5819 Schottky DO-41,Taiwan Semiconductor,1N5819,1801-1N5819CT-ND,$0.32,9767,
+D1,1,LED red 3mm diffused,Kingbright,WP710A10ID,754-1606-ND,$0.24,156303,
+C1,1,1000uF 16V radial 10x20mm 5mm pitch,Nichicon,UHE1C102MPD,493-1526-ND,$0.97,13725,Panasonic EEU-FR1C102 is out of stock (37 wk lead time)
+C2,1,100nF 50V X7R radial 5.08mm,KEMET,C322C104K5R5TA,399-4329-ND,$1.49,25199,
+"R4,R7,R8",3,10k 1/4W 5% carbon film,Stackpole,CF14JT10K0,CF14JT10K0CT-ND,$0.10,564157,
+R5,1,100 1/4W 5% carbon film,Stackpole,CF14JT100R,CF14JT100RCT-ND,$0.10,291582,
+"R6,R10",2,1k 1/4W 5% carbon film,Stackpole,CF14JT1K00,CF14JT1K00CT-ND,$0.10,593503,
+R9,1,330 1/4W 5% carbon film,Stackpole,CF14JT330R,CF14JT330RCT-ND,$0.10,282801,

@@ -1,0 +1,4 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "hyperspi")(type "KiCad")(uri "${KIPRJMOD}/hyperspi.kicad_sym")(options "")(descr "HyperSPI LED controller symbols"))
+)
